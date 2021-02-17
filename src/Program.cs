@@ -69,12 +69,15 @@ namespace TypingReflexGame
                 Console.Error.WriteLine("Unknown platform, halting!");
                 return;
             }
+            
             resizeScreen(40, 100);
             loadingScreen(5);
             startScreen();
+            
             var gameDifficulty = difficultySelect();
             gameLoop((difficulty)gameDifficulty);
         }
+        
         static void resizeScreen(uint COLUMNS, uint ROWS)
         {
             if (COLUMNS < 20 || COLUMNS > 80)
@@ -94,6 +97,7 @@ namespace TypingReflexGame
 
             Console.Clear();
         }
+        
         static void loadingScreen(uint loadingDuration)
         {
             // 1 full second divided by the sum of all sleeps.
@@ -123,6 +127,7 @@ namespace TypingReflexGame
             }
             Console.SetCursorPosition(0, 0);
         }
+        
         /// <summary>
         /// Prints our start screen. I didn't need to put this in
         /// a function, but it looks tidier than using #region imo
@@ -157,7 +162,8 @@ namespace TypingReflexGame
             Console.SetCursorPosition(43, 15);
             Console.ReadKey();
             Console.Clear();
-        } 
+        }
+        
         static int difficultySelect()
         {
             bool difficultySelectDone = false;
@@ -221,6 +227,7 @@ namespace TypingReflexGame
             Thread.Sleep(2500);
             return (predictableOrRandom == difficulty.PREDICTABLE ? 0 : 1);
         }
+        
         static void gameLoop(difficulty gameDifficulty)
         {
             Console.Clear();
@@ -245,8 +252,8 @@ namespace TypingReflexGame
             }
             Console.WriteLine("Your final score is {0}", score);
             Console.ReadKey();
-
         }
+        
         static void randomLetter(difficulty gameDifficulty)
         {
             var rand = new Random((int)DateTime.Now.Ticks);
