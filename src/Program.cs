@@ -2,6 +2,10 @@
 // License: MIT License
 // written in February 2021
 
+// NOTE: I understand that all of my Console.SetCursorPositions have magic numbers,
+// they're just used for centering text by doing 
+// (ConsoleWidth / 2) - (strlen(what we're going to write) / 2)
+
 using System;
 using System.Timers;
 using System.Threading;
@@ -10,95 +14,56 @@ using System.Runtime.InteropServices;
 
 namespace TypingReflexGame
 {
-    enum letters
+    enum Difficulty
     {
-        A,
-        B,
-        C,
-        D,
-        E,
-        F,
-        G,
-        H,
-        I,
-        J,
-        K,
-        L,
-        M,
-        N,
-        O,
-        P,
-        Q,
-        R,
-        S,
-        T,
-        U,
-        V,
-        W,
-        X,
-        Y,
-        Z,
-        NULL
-    }
-    enum difficulty
-    {
-        PREDICTABLE,
-        RANDOM
+        Predictable,
+        Random
     }
     class Program
     {
-        public static System.Timers.Timer reflexTimer;
-        public static double score = 0;
-        public static double timeSinceStarting = 0.00;
-        static void Main(string[] args)
+        static System.Timers.Timer _reflexTimer;
+        static double _score = 0;
+        static double _timeSinceStarting;
+        static void Main()
         {
             // Checks our platform and then resizes the temrinal based on that
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-            {
-                resizeScreen(40, 100);
-            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD)) {
+                ResizeScreen(columns: 40, rows: 100);
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                 // weierd console sequence that sets the console size on osx
                 Console.WriteLine(@"\e[8;100;40t");
-            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 Console.WindowWidth = 40;
                 Console.WindowHeight = 100;
-            } else //unknown platform
-            {
-                Console.Error.WriteLine("Unknown platform, halting!");
-                return;
+            } else {
+                Console.Error.WriteLine("Unknown platform, halting!"); return; 
             }
-            
-            resizeScreen(40, 100);
-            loadingScreen(5);
-            startScreen();
-            
-            var gameDifficulty = difficultySelect();
-            gameLoop((difficulty)gameDifficulty);
+
+            LoadingScreen(loadingDuration: 5 /* seconds*/);
+            StartScreen();
+            var gameDifficulty = DifficultySelect();
+            GameLoop((Difficulty)gameDifficulty); // Do I really need an enum for difficulty?
         }
-        
-        static void resizeScreen(uint COLUMNS, uint ROWS)
+        static void ResizeScreen(uint columns, uint rows)
         {
-            if (COLUMNS < 20 || COLUMNS > 80)
+            if (columns < 20 || columns > 80)
             {
-                throw new ArgumentOutOfRangeException("Columns too high or low!");
-            } else if (ROWS < 100 || ROWS > 240)
+                throw new ArgumentOutOfRangeException(nameof(columns));
+            } else if (rows < 100 || rows > 240)
             {
-                throw new ArgumentOutOfRangeException("Rows too high or low!");
+                throw new ArgumentOutOfRangeException(nameof(rows));
             }
 
             // calling the resize command on linux. not sure if it's present on all distros; probably not
             Process proc = new Process();
             proc.StartInfo.FileName = "/bin/resize";
-            proc.StartInfo.Arguments = String.Format("-s {0} {1}", COLUMNS, ROWS);
+            proc.StartInfo.Arguments = $"-s {columns} {rows}";
             proc.Start();
             proc.WaitForExit();
 
             Console.Clear();
         }
-        
-        static void loadingScreen(uint loadingDuration)
+        static void LoadingScreen(uint loadingDuration)
         {
             // 1 full second divided by the sum of all sleeps.
             // This is so when you plug in a loading Duration,
@@ -127,12 +92,11 @@ namespace TypingReflexGame
             }
             Console.SetCursorPosition(0, 0);
         }
-        
         /// <summary>
         /// Prints our start screen. I didn't need to put this in
         /// a function, but it looks tidier than using #region imo
         /// </summary>
-        static void startScreen()
+        static void StartScreen()
         {
             Console.WriteLine(
 @"/\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\
@@ -162,12 +126,12 @@ namespace TypingReflexGame
             Console.SetCursorPosition(43, 15);
             Console.ReadKey();
             Console.Clear();
-        }
-        
-        static int difficultySelect()
+        } 
+        static int DifficultySelect()
         {
             bool difficultySelectDone = false;
-            difficulty predictableOrRandom = difficulty.PREDICTABLE;
+            Difficulty predictableOrRandom = Difficulty.Predictable;
+
             while (!difficultySelectDone)
             {
                 Console.Clear();
@@ -178,9 +142,9 @@ namespace TypingReflexGame
                 Console.SetCursorPosition(9, 14);
                 Console.Write("(2) Random - The amount of time that passes before the letter is shown is random.");
                 Console.SetCursorPosition(13, 15);
-                Console.Write("Introduces more difficulty.");
+                Console.Write("Introduces more Difficulty.");
                 Console.SetCursorPosition(40, 10);
-                Console.Write("Choose difficulty: ");
+                Console.Write("Choose Difficulty: ");
                 
                 var answer = Console.ReadKey();
 
@@ -189,13 +153,12 @@ namespace TypingReflexGame
                     Console.Clear();
 
                     Console.SetCursorPosition(18, 10);
-                    Console.Write("Are you sure you want your difficulty to be: predictable? (y/n): ");
+                    Console.Write("Are you sure you want your Difficulty to be: predictable? (y/n): ");
 
                     var confirm = Console.ReadKey();
 
-                    if (confirm.Key == ConsoleKey.Y)
-                    {
-                        predictableOrRandom = difficulty.PREDICTABLE;
+                    if (confirm.Key == ConsoleKey.Y) {
+                        predictableOrRandom = Difficulty.Predictable;
                         difficultySelectDone = true;
                     }
 
@@ -204,31 +167,25 @@ namespace TypingReflexGame
                     Console.Clear();
 
                     Console.SetCursorPosition(20, 10);
-                    Console.Write("Are you sure you want your difficulty to be: random? (y/n): ");
+                    Console.Write("Are you sure you want your Difficulty to be: random? (y/n): ");
 
                     var confirm = Console.ReadKey();
 
-                    if (confirm.Key == ConsoleKey.Y)
-                    {
-                        predictableOrRandom = difficulty.RANDOM;
+                    if (confirm.Key == ConsoleKey.Y) {
+                        predictableOrRandom = Difficulty.Random;
                         difficultySelectDone = true;
                     }
-
-                } else
-                {
-                    Console.WriteLine("Invalid option chosen.");
                 }
             }
             Console.Clear();
 
-            Console.SetCursorPosition((predictableOrRandom == difficulty.PREDICTABLE ? 39 : 42), 10);
-            Console.Write($"You chose {(predictableOrRandom == difficulty.PREDICTABLE ? "PREDICTABLE" : "RANDOM")}");
+            Console.SetCursorPosition((predictableOrRandom == Difficulty.Predictable ? 39 : 42), 10);
+            Console.Write($"You chose {(predictableOrRandom == Difficulty.Predictable ? "Predictable" : "Random")}");
 
             Thread.Sleep(2500);
-            return (predictableOrRandom == difficulty.PREDICTABLE ? 0 : 1);
+            return (predictableOrRandom == Difficulty.Predictable ? 0 : 1);
         }
-        
-        static void gameLoop(difficulty gameDifficulty)
+        static void GameLoop(Difficulty gameDifficulty)
         {
             Console.Clear();
 
@@ -246,108 +203,113 @@ namespace TypingReflexGame
 
             Console.ReadKey();
 
-            for (int i = 0; i < 5; i++)
-            {
-                randomLetter(gameDifficulty);
-            }
-            Console.WriteLine("Your final score is {0}", score);
-            Console.ReadKey();
-        }
-        
-        static void randomLetter(difficulty gameDifficulty)
-        {
-            var rand = new Random((int)DateTime.Now.Ticks);
-
-            int random = rand.Next(0, 25);
-
-            var expectedLetter = (letters)random;
-
-            timeSinceStarting = 0.00;
-            reflexTimer = new System.Timers.Timer();
-            reflexTimer.Interval = 50;
-            reflexTimer.Elapsed += OnTimedEvent;
-            reflexTimer.AutoReset = true;
-            reflexTimer.Start();
-
-            while (true)
-            {
-                if (gameDifficulty == difficulty.RANDOM)
-                {
-                    var randWait = new Random((int)DateTime.Now.Ticks);
-                    Thread.Sleep(randWait.Next(300, 4000));
-                }
-                Console.Clear();
-
-                Console.SetCursorPosition(46, 20);
-                Console.Write($"Enter {(ConsoleKey)random + 65}!");
-
-                Console.SetCursorPosition(0, 39);
-                 Console.Write($"{timeSinceStarting:F2}s");
-                
-                var keyEntered = Console.ReadKey();
-
-                if (keyEntered.Key == (ConsoleKey)random + 65)
-                {
-                    reflexTimer.Stop();
-                    break;
-                } else if (timeSinceStarting > 4)
-                {
-                    reflexTimer.Stop();
-                    Console.WriteLine("you didn't hit the key in time!");
-                    break;
-                }
-            }
-            var scoreToAdd = (1000 - (timeSinceStarting * 250));
-            scoreToAdd = (scoreToAdd < 0 ? 0 : scoreToAdd);
-            score += scoreToAdd;
-
-
             Console.Clear();
-
-            Console.SetCursorPosition(36, 20);
-            Console.Write((scoreToAdd > 0) ? $"Nice job, you got {Math.Round(scoreToAdd)} points!" : "That's too bad, you didn't get any points!");
-
-            if (timeSinceStarting < 4)
-            {
-                Console.SetCursorPosition(31, 21);
-                Console.Write($"Your reaction speed was {timeSinceStarting:F2}s. Not bad.");
-            }
-            else
-            {
-                Console.SetCursorPosition(18, 21);
-                Console.Write($"Your reaction time was {timeSinceStarting:F2}s. I know you can to better than that!");
-            }
+            Console.SetCursorPosition(44, 20);
+            Console.Write("Here we go!");
             Thread.Sleep(500);
 
-            Console.SetCursorPosition(30, 22);
-            Console.Write("Starting next challenge in 5 seconds...");
-            Thread.Sleep(250);
+            countDown(seconds: 3);
 
-            Console.SetCursorPosition(50, 23);
-            Console.Write("5");
-            Thread.Sleep(1000);
+            // TODO: Maybe add a way for someone to chose how many times they wanna do this?
+            // instead of just being fixed at 5.
+            for (int i = 0; i < 5; i++)
+            {
+                var randomKey = RandomLetter();
 
-            Console.SetCursorPosition(50, 23);
-            Console.Write("4");
-            Thread.Sleep(1000);
+                _timeSinceStarting = 0.00;
+                _reflexTimer = new System.Timers.Timer();
+                _reflexTimer.Interval = 50;
+                _reflexTimer.Elapsed += OnTimedEvent;
+                _reflexTimer.AutoReset = true;
+                _reflexTimer.Start();
 
-            Console.SetCursorPosition(50, 23);
-            Console.Write("3");
-            Thread.Sleep(1000);
+                while (true)
+                {
+                    if (gameDifficulty == Difficulty.Random) {
+                        var randWait = new Random((int)DateTime.Now.Ticks);
+                        Thread.Sleep(randWait.Next(300, 4000));
+                    }
 
-            Console.SetCursorPosition(50, 23);
-            Console.Write("2");
-            Thread.Sleep(1000);
+                    Console.Clear();
 
-            Console.SetCursorPosition(50, 23);
-            Console.Write("1");
-            Thread.Sleep(1000);
+                    Console.SetCursorPosition(46, 20);
+                    Console.Write($"Enter {randomKey}!");
+
+                    var keyEntered = Console.ReadKey();
+
+                    if (keyEntered.Key == randomKey) {
+                        _reflexTimer.Stop();
+                        break;
+                    } else if (_timeSinceStarting > 4) {
+                        _reflexTimer.Stop();
+                        Console.WriteLine("You didn't hit the key in time!");
+                        break;
+                    }
+                }
+                
+                const double scoreCeiling = 1000;
+                const double pointLossPerSecond = 250;
+                var scoreToAdd = (scoreCeiling - (_timeSinceStarting * pointLossPerSecond));
+                if (scoreToAdd < 0) scoreToAdd = 0;
+                _score += scoreToAdd;
+
+
+                Console.Clear();
+
+                Console.SetCursorPosition(36, 20);
+                Console.Write((scoreToAdd > 0) ? $"Nice job, you got {Math.Round(scoreToAdd)} points!" : "That's too bad, you didn't get any points!");
+
+
+                // NOTE: Is it bad to access private members like this, even though they belong to the same class?
+                if (_timeSinceStarting < 4) {
+                    Console.SetCursorPosition(31, 21);
+                    Console.Write($"Your reaction speed was {_timeSinceStarting:F2}s. Not bad.");
+                } else {
+                    Console.SetCursorPosition(18, 21);
+                    Console.Write($"Your reaction time was {_timeSinceStarting:F2}s. I know you can to better than that!");
+                }
+                Thread.Sleep(500);
+
+                Console.SetCursorPosition(30, 22);
+                Console.Write("Starting next challenge in 5 seconds...");
+                Thread.Sleep(250);
+
+                countDown(seconds: 5);
+
+            }
+
+            Console.WriteLine("Your final score is {0}", _score);
+            Console.ReadKey();
+        }
+        static ConsoleKey RandomLetter()
+        {
+            // Everything before 65 in the ConsoleKey enum is misc characters
+            // so we need to add 65 to our random number so we start at A
+            // instead of something weird like NUMPAD_LEFT
+            const int consoleKeyOffset = 65;
+            var rand = new Random((int)DateTime.Now.Ticks); // just basing our seed based on the current tick. not need and kinda dumb, but it's cool, right?
+            int random = rand.Next(0, 25);
+            return (ConsoleKey)random + consoleKeyOffset;
         }
 
         
         public static void OnTimedEvent(object source, ElapsedEventArgs e) // honestly not sure if this is the good way to keep track of timing for this sort of thing. I think
         {                                                                  // I could use async and await to roll my own sort of thing but I have no idea how to do that.
-            timeSinceStarting += 0.05;
+            _timeSinceStarting += 0.05;
+        }
+
+        static void countDown(int seconds, bool clearScreen = true)
+        {
+            if (clearScreen) Console.Clear();
+
+            var secondsToDisplay = seconds;
+            for (int i = 1; i <= seconds; i++)
+            {
+                Console.SetCursorPosition(50, 23);
+                Console.Write(secondsToDisplay);
+                secondsToDisplay--;
+                Thread.Sleep(1000);
+            }
         }
     }
 }
